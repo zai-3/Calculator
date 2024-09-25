@@ -1,0 +1,75 @@
+lex
+%{
+#include <stdio.h>
+#include <stdlib.h>
+#include "parser.tab.h"
+%}
+
+
+%%
+
+[0-9]+(\.[0-9]+)?  { return NUMBER; }
+"+"               { return '+'; }
+"-"               { return '-'; }
+"*"               { return '*'; }
+"/"               { return '/'; }
+"exit"            { return EXIT; }
+\n                { return EOL; }
+.                 { yyerror("Invalid character"); }
+
+%%
+
+int yywrap(void) {
+    return 1; // Indicate that we've reached the end of input
+}
+
+
+yacc
+
+%{
+#include <stdio.h>
+#include <stdlib.h>
+
+void yyerror(char *s);
+int yylex(void);
+%}
+
+%left '+' '-'
+%left '*' '/'
+
+%token NUMBER
+%token EOL
+%token EXIT
+
+%%
+
+lines: /* empty */
+      | lines line
+      ;
+
+line: expr EOL { printf("Valid arithmetic expression\n"); }
+    | EXIT EOL         { printf("Exiting the calculator\n"); exit(0); }
+    | error EOL{ printf("Invalid arithmetic expression\n"); }
+     ;
+
+expr: NUMBER
+     | expr '+' expr
+     | expr '-' expr
+     | expr '*' expr
+     | expr '/' expr
+     | expr '%' expr
+     ;
+
+
+%%
+
+void yyerror(char *s) {
+}
+
+int main(void) {
+    printf("Enter arithmetic expressions or 'exit' to quit:\n");
+    yyparse();
+    return 0;
+}
+
+
